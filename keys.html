@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ku">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>key server b52</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        pre {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            overflow: auto;
+        }
+
+        .keyItem {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+        }
+        
+        .deleteButton {
+            background-color: #dc3545;
+        }
+
+        .deleteButton:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Key Generator</h1>
+        <button id="generateKeys">Generate Keys</button>
+        <select id="expirySelect">
+            <option value="3600000">1 Hour</option>
+            <option value="7200000">2 Hours</option>
+            <option value="10800000">3 Hours</option>
+            <option value="86400000">1 Day</option>
+            <option value="259200000">3 Days</option>
+            <option value="432000000">5 Days</option>
+            <option value="604800000">7 Days</option>
+            <option value="1296000000">15 Days</option>
+            <option value="2678400000">31 Days</option>
+            <option value="5256000000">61 Days</option>
+            <option value="7776000000">91 Days</option>
+            <option value="31536000000">365 Days</option>
+        </select>
+        <button id="copyKeys">Copy Keys to Clipboard</button>
+        <button id="saveKeys">Save Keys as JSON</button>
+        <button id="deleteExpiredKeys">Delete Expired Keys</button>
+        <div id="keyOutput"></div>
+    </div>
+    <script>
+        document.getElementById("generateKeys").addEventListener("click", generateKeys);
+        document.getElementById("copyKeys").addEventListener("click", copyKeysToClipboard);
+        document.getElementById("saveKeys").addEventListener("click", saveKeysToFile);
+        document.getElementById("deleteExpiredKeys").addEventListener("click", deleteExpiredKeys);
+
+        let keys = [];
+
+        function generateKeys() {
+            keys = []; // Clear previous keys
+            const expiry = parseInt(document.getElementById("expirySelect").value);
+            
+            for (let i = 0; i < 1; i++) { // Generate 10 keys
+                const key = generateRandomKey();
+                const expirationDate = Date.now() + expiry;
+                keys.push({ key, expiresAt: expirationDate });
+            }
+
+            displayKeys();
+            setTimeout(() => deleteExpiredKeys(), expiry); // Schedule deletion
+        }
+
+        function generateRandomKey() {
+            const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789";
+            let result = 'HELL-TOOLS.';
+            for (let i = 0; i < 18; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        function displayKeys() {
+            const keyOutput = document.getElementById("keyOutput");
+            keyOutput.innerHTML = ''; // Clear previous output
+
+            keys.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'keyItem';
+                div.innerHTML = `<span>${item.key} (Expires: ${new Date(item.expiresAt).toLocaleString()})</span>
+                <button class="deleteButton" onclick="deleteKey(${index})">Delete</button>`;
+                keyOutput.appendChild(div);
+            });
+        }
+
+        function deleteExpiredKeys() {
+            const now = Date.now();
+            keys = keys.filter(key => key.expiresAt > now);
+            displayKeys();
+        }
+
+        function deleteKey(index) {
+            keys.splice(index, 1); // Remove the key at the specified index
+            displayKeys();
+        }
+
+        function copyKeysToClipboard() {
+            const jsonData = JSON.stringify(keys, null, 2);
+            navigator.clipboard.writeText(jsonData).then(() => {
+                alert('Keys copied to clipboard! You can paste them into a key.json file.');
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+        function saveKeysToFile() {
+            const jsonData = JSON.stringify(keys, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'key.json'; // Name of the file to be downloaded
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // Clean up the URL object
+        }
+    </script>
+</body>
+</html>
